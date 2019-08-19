@@ -1,0 +1,59 @@
+﻿
+USE Lab1_DB;
+
+--Hiển thị danh sách điểm của sinh viên theo môn học (mã sinh viên, họ và tên, môn thi, điểm thi)
+SELECT SV.MASV,SV.HOTEN,MH.TENMH,D.DIEM FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID;
+
+--Hiển thị danh sách sv thi lại theo môn học (điểm&lt;5) (mã sinh viên, họ và tên, môn thi, điểm thi)
+SELECT SV.MASV,SV.HOTEN,MH.TENMH,D.DIEM FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID WHERE D.DIEM<5;
+
+--Hiển thị danh sách sinh viên theo điểm giảm dần(mã sinh viên, họ và tên, môn thi, điểm thi)
+SELECT SV.MASV,SV.HOTEN,MH.TENMH,D.DIEM FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID ORDER BY D.DIEM DESC;
+
+--Hiển thị 10 sv có điểm cao nhất(mã sinh viên, họ và tên, môn thi, điểm thi)
+SELECT TOP 10 SV.MASV,SV.HOTEN,MH.TENMH,D.DIEM FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID ORDER BY D.DIEM DESC;
+
+--Hiển thị danh sách môn học và tổng số sinh viên thi môn(mã môn, tên môn, tổng số sinh viên)
+select tbl.MH,TBL.TENMH,count(tbl.IDSV) AS SL from (
+SELECT MH.ID as MH,MH.TENMH TENMH,MH.ID as IDSV FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID group by mh.ID,sv.ID,MH.TENMH) as tbl GROUP BY TBL.MH,TBL.TENMH;
+
+--Hiển thị danh sách môn học và tổng số sinh viên thi lại(mã môn, tên môn, tổng số sinh viên thi lại(mark<5))
+SELECT TBL.MHID,TBL.TENMH,COUNT(*) AS SOSVTHILAI FROM(
+SELECT MH.ID AS MHID,MH.TENMH AS TENMH,SV.ID AS SVID FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID WHERE D.DIEM<5 GROUP BY MH.ID,SV.ID,MH.TENMH )TBL GROUP BY TBL.MHID,TBL.TENMH;
+
+--Danh sách sinh viên có điểm trung bình trên 7.0 (điểm trung bình các môn thi) (Mã sinh viên, Điểm trung bình)
+SELECT * FROM(
+SELECT SV.ID,SUM(D.DIEM*MH.SOTINCHI)/SUM(MH.SOTINCHI) DIEM FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID GROUP BY SV.ID) TBL WHERE TBL.DIEM>7;
+
+--Hiển thị thông tin tên sinh viên, tên môn học có điểm cao nhất của sinh viên đó.
+SELECT SV.ID as svid,SV.HOTEN,MAX(D.DIEM) AS DIEM FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID GROUP BY SV.ID,SV.HOTEN;
+
+--Hiển thị thông tin tên sinh viên, tên môn học, điểm trung bình, có được học bổng không (được học bổng tức là không phải thi lại; (tổng số lần thi = tổng số môn học) và điểm trung bình >8.0)
+SELECT TBL.ID,TBL.HOTEN,TBL.DIEMTB,CASE WHEN (TBL.DIEMTB>=8 AND TBL.LANTHI=1) THEN 'DUOC HOC BONG' ELSE 'KO DC HOC BONG' END AS HOCBONG FROM(
+SELECT SV.ID,SV.HOTEN,SUM(D.DIEM*MH.SOTINCHI)/SUM(MH.SOTINCHI) AS DIEMTB,MAX(D.LANTHI) AS LANTHI FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID GROUP BY SV.ID,SV.HOTEN)  TBL;
+
+--Hiển thị thông tin tên sinh viên, tổng số tin chỉ mà sinh viên đó đã học với điều kiện số tin chỉ >=10
+select tbl.* from (
+SELECT SV.MASV,SV.HOTEN,SUM(MH.SOTINCHI) SOTINCHI FROM SINHVIEN SV
+LEFT JOIN DIEM D ON SV.ID =D.IDSV
+JOIN MONHOC MH ON D.IDMH = MH.ID  group by SV.MASV,SV.HOTEN) TBL where TBL.SOTINCHI>=10;
+
+
